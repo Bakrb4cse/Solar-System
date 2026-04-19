@@ -11,12 +11,15 @@ function SolarForm({ onCalculate }) {
   const [selectedStandard, setSelectedStandard] = useState({});
   const [selectedPanel, setSelectedPanel] = useState({ 
     capacity: "--", 
-    brand: "--" 
+    brand: "--" ,
+    price: "--"
+
   });
 
   const handleFinalCalculate = () => {
     // 1. تنظيف رقم قدرة اللوح وتحويله من "590W" إلى 590
     const numericPanelPower = parseFloat(selectedPanel.capacity.replace(/[^\d.]/g, ''));
+     
     
     // 2. التحقق من وجود أجهزة مختارة لتجنب نتيجة الصفر
     if (Object.keys(selectedStandard).length === 0) {
@@ -33,14 +36,19 @@ if (!numericPanelPower || numericPanelPower === 0) {
 
     // 3. تنفيذ الحسابات باستخدام الأجهزة والقدرة المختارة
     const results = calculateSolarSystem(selectedStandard, numericPanelPower);
+ 
 
     const finalResults = { 
     ...results, 
     customerInfo,
     selectedDevices: selectedStandard,
-    panelBrand: selectedPanel.brand, // تأكد أن selectedPanel يحتوي على brand
+    panelBrand: selectedPanel.brand,
+    
+
+ // تأكد أن selectedPanel يحتوي على brand
     panelCapacity: selectedPanel.capacity 
   };
+
     // 4. إرسال النتائج مع معلومات العميل واللوح المختار للعرض النهائي
     onCalculate(finalResults);  
 

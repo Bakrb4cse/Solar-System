@@ -111,9 +111,15 @@ function App() {
           <span className="text-base font-bold ">العنوان:</span>
         </div>
         <div className="text-[12px] leading-tight font-bold mr-3">
-          <p>عدن - المنصورة - خلف سوق</p>
-          <p>الخضار - مقابل فندق ماس</p>
-          <p>عدن</p>
+<a href="https://maps.app.goo.gl/AbKp8oEzLUm5eCCS7" 
+target="_blank" 
+  rel="noopener noreferrer"
+  className="text-[12px] leading-tight font-bold mr-3 hover:text-green-700 transition-colors cursor-pointer block" > 
+  <p>عدن - المنصورة - خلف سوق</p>
+  <p>الخضار - مقابل فندق ماس</p>
+  <p>عدن</p>
+</a>
+
         </div>
       </div>
 

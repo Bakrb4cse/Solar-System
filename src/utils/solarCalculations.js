@@ -4,29 +4,28 @@ import { solarData } from '../constants/data';
  * وظيفة اختيار أفضل إنفرتر مطابق من مصفوفة البيانات
  * تم تحديثها لتشمل فحص قدرة الألواح القصوى (maxSolarPower) بجانب سعة الـ AC
  */
-const findBestInverter = (requiredSize, totalPanelsWattage) => {
-  const inverters = solarData.inverters;
-  
+const findBestSelections = (requiredInvSize, totalPVWattage, requiredBattSize) => {
   const parseCapacity = (capStr) => {
     const num = parseFloat(capStr.replace(/[^\d.]/g, ''));
     return isNaN(num) ? 0 : num;
   };
 
-  // 1. ترتيب الإنفرترات تصاعدياً حسب السعر لضمان أفضل خيار اقتصادي
-  const sortedInverters = [...inverters].sort((a, b) => a.price - b.price);
-
-  // 2. البحث عن أول جهاز يغطي الاحتياج (حجم الإنفرتر + قدرة الألواح)
-  let matched = sortedInverters.find(inv => 
-    parseCapacity(inv.capacity) >= requiredSize && 
-    inv.maxSolarPower >= totalPanelsWattage
+  // --- فلترة الإنفرتر ---
+  const sortedInverters = [...solarData.inverters].sort((a, b) => a.price - b.price);
+  let matchedInv = sortedInverters.find(inv => 
+    parseCapacity(inv.capacity) >= requiredInvSize && 
+    inv.maxSolarPower >= totalPVWattage
   );
+  if (!matchedInv) matchedInv = sortedInverters[sortedInverters.length - 1];
 
-  // 3. اختيار الأكبر في حال تجاوز الاحتياج كل الخيارات
-  if (!matched) {
-    matched = sortedInverters[sortedInverters.length - 1];
-  }
+  // --- فلترة البطارية ---
+  const sortedBatteries = [...solarData.batteries].sort((a, b) => a.price - b.price);
+  let matchedBatt = sortedBatteries.find(batt => 
+    parseCapacity(batt.capacity) >= requiredBattSize
+  );
+  if (!matchedBatt) matchedBatt = sortedBatteries[sortedBatteries.length - 1];
 
-  return matched;
+  return { selectedInverter: matchedInv, selectedBattery: matchedBatt };
 };
 
 /**
@@ -60,12 +59,10 @@ export const calculateSolarSystem = (selectedDevices, panelPower) => {
   const theoreticalInverterSizeKva = (maxPeakLoad * 1.2) / 1000;
   
   // استدعاء الفلترة مع تمرير واط الألواح لضمان عدم تجاوز قدرة المنظم
-  const selectedInverter = findBestInverter(theoreticalInverterSizeKva, totalPVWattage);
   
-  const productValueOnly = parseFloat(selectedInverter.capacity.replace(/[^\d.]/g, ''));
 
   // البحث عن كائن اللوح لجلب اسمه المختصر
-  const selectedPanelObj = solarData.solarPanels.find(p => parseFloat(p.capacity) === panelPower);
+  
 
   // 3. حساب سعة البطارية (LiFePO4)
   const calculatedBattery = (nightEnergyWh / 1000) / (0.9 * 0.9);
@@ -75,22 +72,53 @@ export const calculateSolarSystem = (selectedDevices, panelPower) => {
     ? Math.max(calculatedBattery, minBattery) 
     : minBattery;
 
+  const { selectedInverter, selectedBattery } = findBestSelections(
+    theoreticalInverterSizeKva, 
+    totalPVWattage, 
+    finalBatteryKwh
+  );
+  const productValueOnly = parseFloat(selectedInverter.capacity.replace(/[^\d.]/g, ''));
+  const battereValueOnly = parseFloat(selectedBattery.capacity.replace(/[^\d.]/g, ''));
+  const selectedPanelObj = solarData.solarPanels.find(p => parseFloat(p.capacity) === panelPower);
+   
+  // --- توليد رقم طلب فريد (Order ID) ---
+    // 1. جلب القيمة وتحويلها لرقم
+  const savedNumber = localStorage.getItem('last_solar_order_number');
+  let lastOrderNumber = savedNumber ? parseInt(savedNumber) : 0;
+  
+  // 2. زيادة الرقم
+  const newOrderNumber = lastOrderNumber + 1;
+  
+  // 3. تخزين الرقم الجديد (تحويله لنص عند التخزين لتجنب المشاكل)
+  localStorage.setItem('last_solar_order_number', newOrderNumber.toString());
+  
+  // 4. تحويل الرقم إلى نص قبل استخدام padStart لمنع الخطأ الظاهر في الصورة
+  const paddedNumber = String(newOrderNumber).padStart(6, '0');
+  
+  // 5. النتيجة النهائية
+  const orderId = `LS-${paddedNumber}`;
+
+  
+
+
+
   // إرجاع النتائج النهائية مع الحفاظ على كل المتغيرات القديمة وإضافة الجديدة
   return {
-    // المتغيرات الأصلية (لم يتم حذف أي منها)
+   orderId: orderId,
     panels: panelsNeeded,
     inverterProductValue: productValueOnly, 
     inverterActualNeed: theoreticalInverterSizeKva.toFixed(2), 
     inverterBrand: selectedInverter.brand,
+    inverterName: selectedInverter.name,
     inverterPrice: selectedInverter.price,
-    inverterVoltage: selectedInverter.systemVoltage,
+    batteryKwh: battereValueOnly,
+    batteryPrice: selectedBattery.price,
+    batteryName: selectedBattery.name, 
     batteries: parseFloat(finalBatteryKwh.toFixed(1)),
     totalEnergy: totalDailyEnergy,
     peakLoad: (maxPeakLoad / 1000).toFixed(2),
-
-    // المتغيرات الجديدة المطلوبة للرسالة والواجهة
     panelName: selectedPanelObj ? selectedPanelObj.name : `${panelPower}W`,
-    inverterName: selectedInverter.name,
+    panelPrice: selectedPanelObj?.price,
     dayEnergyWh: dayEnergyWh,
     nightEnergyWh: nightEnergyWh,
     actualLoadKwh: (totalDailyEnergy / 1000).toFixed(2),
