@@ -4,7 +4,8 @@ export const solarData = {
   // 1_ الألواح الشمسية
   solarPanels: [
     { id: 1, brand: "AIKO", capacity: "665W", efficiency: "24.5%", price: 120, name: "AIKO-665W-24.5%" },
-    { id: 2, brand: "AIKO", capacity: "645W", efficiency: "22.5%", price: 110, name: "AIKO-645W-22.5%" }
+    { id: 2, brand: "AIKO", capacity: "645W", efficiency: "22.5%", price: 110, name: "AIKO-645W-22.5%" },
+    { id: 2, brand: "AIKO", capacity: "770W", efficiency: "25.5%", price: 130, name: "AIKO-770W-25.5%" }
   ],
 
   // 2_ أجهزة الإنفرتر (17 جهازاً)
@@ -16,13 +17,10 @@ export const solarData = {
     { id: 5, brand: "Solis", capacity: "12KW", systemVoltage: "48V", maxSolarPower: 18000, price: 1850, name: "Solis-12KW/V48/mx18k" },
 
 
-    { id: 6, brand: "Sako", capacity: "2KW", systemVoltage: "24V", maxSolarPower: 2000, price: 210, name: "Sako-2KW/V24/mx1.6k" },
-    { id: 7, brand: "Sako", capacity: "6.2KW", systemVoltage: "48V", maxSolarPower: 6500, price: 350, name: "Sako-6.2KW/V48/mx6.5k" },
-    { id: 8, brand: "Sako", capacity: "11KW", systemVoltage: "48V/96V", maxSolarPower: 11000, price: 800, name: "Sako-11KW-V48/96-mx11k" },
-    { id: 9, brand: "Sako", capacity: "4.2KW", systemVoltage: "24V", maxSolarPower: 5000, price: 275, name: "Sako-4.2KW-V24-mx5k" },
+  
 
     { id: 10, brand: "Lego", capacity: "2KW", systemVoltage: "24V", maxSolarPower: 2000, price: 200, name: "Lego-2KW-V24-mx2.4k" },
-    { id: 11, brand: "Lego", capacity: "4.2KW", systemVoltage: "24V", maxSolarPower: 5000, price: 255, name: "Lego-4.2KW-V24-mx5k" },
+  
     { id: 12, brand: "Lego", capacity: "6.2KW", systemVoltage: "48V", maxSolarPower: 6500, price: 330, name: "Lego-6.2KW-V48-mx6.5k" },
     { id: 13, brand: "Lego", capacity: "11KW", systemVoltage: "48V", maxSolarPower: 11000, price: 780, name: "Lego-11KW-V48-mx11k" },
     { id: 14, brand: "Deye Hybrid", capacity: "6KW", systemVoltage: "48V", maxSolarPower: 7800, price: 850, name: "Deye-6KW-H-V48-mx7.8k" },

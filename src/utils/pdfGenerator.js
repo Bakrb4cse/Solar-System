@@ -27,11 +27,40 @@ const getDeviceLabel = (key) => {
   return deviceLabels[key] || key.replace(/_/g, ' ');
 };
 
-// دالة حساب استهلاك جهاز
+// دالة مساعدة لتنسيق عرض القدرة (إذا كانت مختلفة بين النهار والليل)
+const formatPowerDisplay = (device) => {
+  const hasDayNightPower = (device.dayPower !== undefined && device.dayPower !== device.power) ||
+                           (device.nightPower !== undefined && device.nightPower !== device.power);
+  if (hasDayNightPower) {
+    const dayP = device.dayPower !== undefined ? device.dayPower : device.power;
+    const nightP = device.nightPower !== undefined ? device.nightPower : device.power;
+    return `${dayP}/${nightP}`;
+  }
+  return (device.power || 0).toString();
+};
+
+// دالة مساعدة لتنسيق عرض العدد (نهار/ليل)
+const formatCountDisplay = (device) => {
+  const dayCnt = device.dayCount !== undefined ? device.dayCount : (device.count || 0);
+  const nightCnt = device.nightCount !== undefined ? device.nightCount : (device.count || 0);
+  return `${dayCnt}/${nightCnt}`;
+};
+
+// دالة حساب استهلاك جهاز - معدلة لدعم dayCount/nightCount و dayPower/nightPower
 const calcDeviceConsumption = (device) => {
   if (!device) return { day: 0, night: 0, total: 0 };
-  const dayCons = (device.count || 0) * (device.power || 0) * (device.dayHours || 0);
-  const nightCons = (device.count || 0) * (device.power || 0) * (device.nightHours || 0);
+  
+  // القدرات: إذا وجدت dayPower/nightPower نستخدمها، وإلا نستخدم power للكل
+  const dayPower = device.dayPower !== undefined ? device.dayPower : (device.power || 0);
+  const nightPower = device.nightPower !== undefined ? device.nightPower : (device.power || 0);
+  
+  // الأعداد
+  const dayCount = device.dayCount !== undefined ? device.dayCount : (device.count || 0);
+  const nightCount = device.nightCount !== undefined ? device.nightCount : (device.count || 0);
+  
+  const dayCons = dayCount * dayPower * (device.dayHours || 0);
+  const nightCons = nightCount * nightPower * (device.nightHours || 0);
+  
   return { day: dayCons, night: nightCons, total: dayCons + nightCons };
 };
 
@@ -94,8 +123,8 @@ let totalPrice = totalPanelsPrice + totalInverterPrice + totalBatteriesPrice;
   { text: consumption.night.toString(), alignment: 'center' },        // 2- استهلاك المساء
   { text: consumption.day.toString(), alignment: 'center' },          // 3- استهلاك النهار
   { text: `${device.dayHours || 0}/${device.nightHours || 0}`, alignment: 'center' }, // 4- الساعات
-  { text: device.power?.toString() || '0', alignment: 'center' },     // 5- القدرة
-  { text: device.count?.toString() || '0', alignment: 'center' },     // 6- العدد
+  { text: formatPowerDisplay(device), alignment: 'center' },          // 5- القدرة (مع دعم الفصل)
+  { text: formatCountDisplay(device), alignment: 'center' },          // 6- العدد (نهار/ليل)
   { text: getDeviceLabel(key), alignment: 'right' }                   // 7- الصنف
 ]);
 
@@ -136,7 +165,7 @@ let totalPrice = totalPanelsPrice + totalInverterPrice + totalBatteriesPrice;
     {
       width: '35%', // تم توحيد العرض هنا
       stack: [
-        { text: 'عدن - المنصورة - خلف سوق الخضار - مقابل فندق ماسك', fontSize: 8, bold: true, color: '#229a0d', alignment: 'left' },
+        { text: 'ماس فندق مقابل -الخضار سوق خلف -المنصورة -عدن', fontSize: 8, bold: true, color: '#229a0d', alignment: 'left' },
         { 
           stack: [
             { text: '783265111 :العملاء خدمة', fontSize: 8, bold: true, color: '#229a0d', alignment: 'left' },
@@ -259,7 +288,7 @@ let totalPrice = totalPanelsPrice + totalInverterPrice + totalBatteriesPrice;
         { text: 'النهار استهلاك', style: 'tableHeader', alignment: 'center' },
         { text: '(ن/م) ساعات', style: 'tableHeader', alignment: 'center' },
         { text: '(W) القدرة', style: 'tableHeader', alignment: 'center' },
-        { text: 'العدد', style: 'tableHeader', alignment: 'center' },
+        { text: 'العدد (ن/م)', style: 'tableHeader', alignment: 'center' },
         { text: 'الصنف', style: 'tableHeader', alignment: 'center' }
       ],
       ...deviceRows 
