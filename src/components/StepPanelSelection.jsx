@@ -39,7 +39,7 @@ const StepPanelSelection = ({ selectedPanel, setSelectedPanel, onBack, onCalcula
             </div>
             
             <span className={styles.panelValue}>
-              {panel.capacity.replace('W', '')}
+              {panel.capacity}
             </span>
 
             <span className={styles.panelUnit}>WATT</span>

@@ -18,7 +18,7 @@ function SolarForm({ onCalculate }) {
 
   const handleFinalCalculate = () => {
     // 1. تنظيف رقم قدرة اللوح وتحويله من "590W" إلى 590
-    const numericPanelPower = parseFloat(selectedPanel.capacity.replace(/[^\d.]/g, ''));
+    const numericPanelPower = parseFloat(selectedPanel.capacity);
      
     
     // 2. التحقق من وجود أجهزة مختارة لتجنب نتيجة الصفر

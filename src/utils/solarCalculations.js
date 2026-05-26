@@ -213,12 +213,13 @@ export const calculateSolarSystem = (selectedDevices, panelPower) => {
   const selectedPanelObj = solarData.solarPanels.find(p => parseFloat(p.capacity) === panelPower);
 
   // --- توليد رقم طلب فريد (Order ID) ---
-  const savedNumber = localStorage.getItem('last_solar_order_number');
-  let lastOrderNumber = savedNumber ? parseInt(savedNumber) : 0;
-  const newOrderNumber = lastOrderNumber + 1;
-  localStorage.setItem('last_solar_order_number', newOrderNumber.toString());
-  const paddedNumber = String(newOrderNumber).padStart(6, '0');
-  const orderId = `LS-${paddedNumber}`;
+  const randomNum = Math.floor(Math.random() * 999999) + 1;
+
+// تحويله إلى نص مع تعبئة (padding) بـ 6 أرقام
+const paddedNumber = String(randomNum).padStart(6, '0');
+
+// تشكيل رقم الطلب النهائي
+const orderId = `LS-${paddedNumber}`;
 
   // إرجاع النتائج النهائية
   return {

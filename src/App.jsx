@@ -33,7 +33,7 @@ function App() {
           {/* إصدار الحاسبة - تم الحفاظ على التصميم المتناسق */}
           <div className="flex flex-col items-end">
             <div className="text-[10px] font-bold text-[#00a896] bg-emerald-50 px-1 py-1 rounded-full border border-emerald-100 uppercase tracking-widest ">
-              نظام تحجيم المنظومات v2.0
+              نظام تحجيم المنظومات v2.10
             </div>
            <p className="text-slate-500 text-[10px] text-center mt-2 leading-relaxed">
   تم التطوير بواسطة المهندس {' '}
