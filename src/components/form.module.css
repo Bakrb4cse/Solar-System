@@ -56,3 +56,46 @@
 
 .activeLabel { color: #064e3b; }
 .inactiveLabel { color: #94a3b8; }
+
+.selectWrapper {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.inputGroup:focus-within {
+  border-color: #f28100;
+  box-shadow: 0 0 0 3px rgba(242, 129, 0, 0.1);
+}
+
+.inputIcon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.selectField {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #1e293b;
+  font-family: inherit;
+  direction: rtl;
+  cursor: pointer;
+}
+
+.selectField option {
+  padding: 8px;
+  direction: rtl;
+}

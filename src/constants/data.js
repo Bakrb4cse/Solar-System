@@ -66,7 +66,7 @@ export const solarData = {
   solarPanels: [
     { id: 1, brand: "AIKO", capacity: "665W", efficiency: "24.5%", price: 120, name: "AIKO-665W-24.5%" },
     { id: 2, brand: "AIKO", capacity: "645W", efficiency: "22.5%", price: 110, name: "AIKO-645W-22.5%" },
-    { id: 2, brand: "AIKO", capacity: "770W", efficiency: "25.5%", price: 130, name: "AIKO-770W-25.5%" }
+    { id: 3, brand: "AIKO", capacity: "770W", efficiency: "25.5%", price: 130, name: "AIKO-770W-25.5%" }
   ],
 
   // 2_ أجهزة الإنفرتر (17 جهازاً)

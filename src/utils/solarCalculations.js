@@ -1,248 +1,295 @@
 import { solarData } from '../constants/data'; 
+import { getPeakSunHoursByLocation } from '../constants/locations';
 
-/**
- * وظيفة اختيار أفضل إنفرتر مطابق من مصفوفة البيانات
- * تم تحديثها لتشمل فحص قدرة الألواح القصوى (maxSolarPower) بجانب سعة الـ AC
- */
-/* const findBestSelections = (requiredInvSize, totalPVWattage, requiredBattSize) => {
-  const parseCapacity = (capStr) => {
-    const num = parseFloat(capStr.replace(/[^\d.]/g, ''));
-    return isNaN(num) ? 0 : num;
-  };
+// ثوابت النظام الأساسية
+const SYSTEM_EFFICIENCY = 0.88;
+const SAFETY_FACTOR = 1.15;
+const BATTERY_EFFICIENCY = 0.9;
+const BATTERY_DOD = 0.9;
+const INVERTER_SAFETY = 1.2;
+const DIVERSITY_FACTOR = 0.85;
 
-  // --- فلترة الإنفرتر ---
-  const sortedInverters = [...solarData.inverters].sort((a, b) => a.price - b.price);
-  let matchedInv = sortedInverters.find(inv => 
-    parseCapacity(inv.capacity) >= requiredInvSize && 
-    inv.maxSolarPower >= totalPVWattage
-  );
-  if (!matchedInv) matchedInv = sortedInverters[sortedInverters.length - 1];
-
-  // --- فلترة البطارية ---
-  const sortedBatteries = [...solarData.batteries].sort((a, b) => a.price - b.price);
-  let matchedBatt = sortedBatteries.find(batt => 
-    parseCapacity(batt.capacity) >= requiredBattSize
-  );
-  if (!matchedBatt) matchedBatt = sortedBatteries[sortedBatteries.length - 1];
-
-  return { selectedInverter: matchedInv, selectedBattery: matchedBatt };
+// دالة تنظيف واستخراج الأرقام من النصوص (مثال: "3.5KWH" تتحول إلى 3.5)
+const parseCapacity = (capValue) => {
+  if (typeof capValue === 'number') return capValue;
+  if (!capValue) return 0;
+  const num = parseFloat(String(capValue).replace(/[^\d.]/g, ''));
+  return isNaN(num) ? 0 : num;
 };
 
+// 🛠️ اختيار الإنفرتر المناسب بناءً على الحمل والألواح ونظام التوازي
+const findBestInverter = (requiredInvSize, totalPVWattage, systemVoltage = 48) => {
+  const voltageInverters = solarData.inverters.filter(inv => Number(inv.batteryVoltage) === systemVoltage);
+  const targetInverters = voltageInverters.length > 0 ? voltageInverters : solarData.inverters;
 
-export const calculateSolarSystem = (selectedDevices, panelPower) => {
-  let dayEnergyWh = 0;    
-  let nightEnergyWh = 0;  
-  let maxPeakLoad = 0;    
-
-  // حساب الاستهلاك بناءً على الأجهزة المختارة (نفس المنطق الأصلي)
-  Object.values(selectedDevices).forEach(device => {
-    const deviceTotalPower = device.count * device.power;
-    
-    const dayWh = deviceTotalPower * (Number(device.dayHours) || 0);
-    const nightWh = deviceTotalPower * (Number(device.nightHours) || 0);
-
-    dayEnergyWh += dayWh;
-    nightEnergyWh += nightWh;
-    maxPeakLoad += deviceTotalPower;
-  });
-
-  const totalDailyEnergy = dayEnergyWh + nightEnergyWh;
-
-  // 1. حساب الألواح (6 ساعات ذروة مع معامل فقد 0.88)
-  const totalEnergyRequired = totalDailyEnergy * 1.15;
-  const panelsNeeded = Math.ceil(totalEnergyRequired / (panelPower * 6 * 0.88));
-  const totalPVWattage = panelsNeeded * panelPower;
-
-  // 2. حساب حجم الإنفرتر (النظري + اختيار المنتج)
-  const theoreticalInverterSizeKva = (maxPeakLoad * 1.2) / 1000;
-  
-  // استدعاء الفلترة مع تمرير واط الألواح لضمان عدم تجاوز قدرة المنظم
-  
-
-  // البحث عن كائن اللوح لجلب اسمه المختصر
-  
-
-  // 3. حساب سعة البطارية (LiFePO4)
-  const calculatedBattery = (nightEnergyWh / 1000) / (0.9 * 0.9);
-  const minBattery = 2.5; 
-
-  const finalBatteryKwh = nightEnergyWh > 0 
-    ? Math.max(calculatedBattery, minBattery) 
-    : minBattery;
-
-  const { selectedInverter, selectedBattery } = findBestSelections(
-    theoreticalInverterSizeKva, 
-    totalPVWattage, 
-    finalBatteryKwh
+  const sortedInverters = [...targetInverters].sort((a, b) => 
+    parseCapacity(a.capacity) - parseCapacity(b.capacity)
   );
-  const productValueOnly = parseFloat(selectedInverter.capacity.replace(/[^\d.]/g, ''));
-  const battereValueOnly = parseFloat(selectedBattery.capacity.replace(/[^\d.]/g, ''));
-  const selectedPanelObj = solarData.solarPanels.find(p => parseFloat(p.capacity) === panelPower);
-   
-  // --- توليد رقم طلب فريد (Order ID) ---
-    // 1. جلب القيمة وتحويلها لرقم
-  const savedNumber = localStorage.getItem('last_solar_order_number');
-  let lastOrderNumber = savedNumber ? parseInt(savedNumber) : 0;
-  
-  // 2. زيادة الرقم
-  const newOrderNumber = lastOrderNumber + 1;
-  
-  // 3. تخزين الرقم الجديد (تحويله لنص عند التخزين لتجنب المشاكل)
-  localStorage.setItem('last_solar_order_number', newOrderNumber.toString());
-  
-  // 4. تحويل الرقم إلى نص قبل استخدام padStart لمنع الخطأ الظاهر في الصورة
-  const paddedNumber = String(newOrderNumber).padStart(6, '0');
-  
-  // 5. النتيجة النهائية
-  const orderId = `LS-${paddedNumber}`;
 
-  
-
-
-
-  // إرجاع النتائج النهائية مع الحفاظ على كل المتغيرات القديمة وإضافة الجديدة
-  return {
-   orderId: orderId,
-    panels: panelsNeeded,
-    inverterProductValue: productValueOnly, 
-    inverterActualNeed: theoreticalInverterSizeKva.toFixed(2), 
-    inverterBrand: selectedInverter.brand,
-    inverterName: selectedInverter.name,
-    inverterPrice: selectedInverter.price,
-    batteryKwh: battereValueOnly,
-    batteryPrice: selectedBattery.price,
-    batteryName: selectedBattery.name, 
-    batteries: parseFloat(finalBatteryKwh.toFixed(1)),
-    totalEnergy: totalDailyEnergy,
-    peakLoad: (maxPeakLoad / 1000).toFixed(2),
-    panelName: selectedPanelObj ? selectedPanelObj.name : `${panelPower}W`,
-    panelPrice: selectedPanelObj?.price,
-    dayEnergyWh: dayEnergyWh,
-    nightEnergyWh: nightEnergyWh,
-    actualLoadKwh: (totalDailyEnergy / 1000).toFixed(2),
-    peakLoadKw: (maxPeakLoad / 1000).toFixed(2)
-  };
-}; */
-
-
-
-
-/**
- * وظيفة اختيار أفضل إنفرتر وبطارية مطابقين من مصفوفة البيانات
- */
-const findBestSelections = (requiredInvSize, totalPVWattage, requiredBattSize) => {
-  const parseCapacity = (capStr) => {
-    const num = parseFloat(capStr.replace(/[^\d.]/g, ''));
-    return isNaN(num) ? 0 : num;
-  };
-
-  // --- فلترة الإنفرتر ---
-  const sortedInverters = [...solarData.inverters].sort((a, b) => a.price - b.price);
-  let matchedInv = sortedInverters.find(inv => 
-    parseCapacity(inv.capacity) >= requiredInvSize && 
-    inv.maxSolarPower >= totalPVWattage
+  // 1) البحث عن إنفرتر منفرد يلبي كامل الاحتياج
+  let matched = sortedInverters.find(inv => 
+    parseCapacity(inv.capacity) >= requiredInvSize &&
+    (inv.maxSolarPower || 0) >= totalPVWattage
   );
-  if (!matchedInv) matchedInv = sortedInverters[sortedInverters.length - 1];
 
-  // --- فلترة البطارية ---
-  const sortedBatteries = [...solarData.batteries].sort((a, b) => a.price - b.price);
-  let matchedBatt = sortedBatteries.find(batt => 
-    parseCapacity(batt.capacity) >= requiredBattSize
-  );
-  if (!matchedBatt) matchedBatt = sortedBatteries[sortedBatteries.length - 1];
+  if (matched) {
+    return { inverter: matched, count: 1 };
+  }
 
-  return { selectedInverter: matchedInv, selectedBattery: matchedBatt };
+  // 2) نظام التوازي عند العجز عن إيجاد إنفرتر منفرد ضخم
+  const largestInverter = sortedInverters[sortedInverters.length - 1] || solarData.inverters[0];
+  const largestCap = parseCapacity(largestInverter.capacity) || 5;
+  const largestSolar = largestInverter.maxSolarPower || 5000;
+
+  const countByLoad = Math.ceil(requiredInvSize / largestCap);
+  const countBySolar = Math.ceil(totalPVWattage / largestSolar);
+  const inverterCount = Math.max(countByLoad, countBySolar, 1);
+
+  return { inverter: largestInverter, count: inverterCount };
 };
+// 🔋 اختيار البطارية المناسبة (نسخة محسنة)
+const findBestBattery = (requiredBattSize, systemVoltage = 48) => {
 
-/**
- * الدالة الرئيسية لحسابات المنظومة الشمسية
- * تم التحديث لدعم القدرة المتغيرة (النهار والليل) للمكيفات
- */
-export const calculateSolarSystem = (selectedDevices, panelPower) => {
-  let dayEnergyWh = 0;    
-  let nightEnergyWh = 0;  
-  let maxPeakLoad = 0;    
+  // فلترة البطاريات حسب فولتية النظام
+  const voltageBatteries = solarData.batteries.filter(
+    b => Number(b.voltage) === systemVoltage
+  );
 
-  // حساب الاستهلاك بناءً على الأجهزة المختارة
-  Object.values(selectedDevices).forEach(device => {
-    // 1. تحديد القدرة لكل فترة:
-    const dP = Number(device.dayPower) || Number(device.power) || 0;
-    const nP = Number(device.nightPower) || Number(device.power) || 0;
+  const targetBatteries =
+    voltageBatteries.length > 0
+      ? voltageBatteries
+      : solarData.batteries;
 
-    // 2. حساب حمل الذروة (Peak Load):
-    const currentPeak = Math.max(
-      (Number(device.dayCount) || 0) * dP,
-      (Number(device.nightCount) || 0) * nP
+  // ترتيب تصاعدي حسب السعة
+  const sortedBatteries = [...targetBatteries].sort(
+    (a, b) =>
+      parseCapacity(a.capacity) -
+      parseCapacity(b.capacity)
+  );
+
+  const largestCapacity =
+    parseCapacity(
+      sortedBatteries[sortedBatteries.length - 1].capacity
     );
-    maxPeakLoad += currentPeak;
-    
-    // 3. حساب استهلاك الطاقة (Wh):
-    const dayWh = (Number(device.dayCount) || 0) * dP * (Number(device.dayHours) || 0);
-    const nightWh = (Number(device.nightCount) || 0) * nP * (Number(device.nightHours) || 0);
 
-    dayEnergyWh += dayWh;
-    nightEnergyWh += nightWh;
+  const uniqueCapacities = [
+    ...new Set(
+      sortedBatteries.map(b =>
+        parseCapacity(b.capacity)
+      )
+    )
+  ].sort((a, b) => a - b);
+
+  // ============================================================
+  // الشرط الأول: بطارية واحدة تكفي
+  // ============================================================
+  if (requiredBattSize <= largestCapacity) {
+
+    const matched = sortedBatteries.find(
+      b => parseCapacity(b.capacity) >= requiredBattSize
+    );
+
+    if (matched) {
+      return {
+        battery: matched,
+        count: 1
+      };
+    }
+  }
+
+  // ============================================================
+  // الشرط الثاني: تجميع ذكي كامل
+  // ============================================================
+
+  let bestOption = null;
+
+  // يمكن رفع الرقم لاحقاً حسب سياسة الشركة
+  const maxBatteries = 12;
+
+  for (let num = 2; num <= maxBatteries; num++) {
+
+    for (const cap of uniqueCapacities) {
+
+      const totalCapacity = cap * num;
+
+      // استبعاد أي خيار أقل من الاحتياج
+      if (totalCapacity < requiredBattSize) {
+        continue;
+      }
+
+      const batteryObj = sortedBatteries.find(
+        b => parseCapacity(b.capacity) === cap
+      );
+
+      if (!batteryObj) continue;
+
+      const surplus =
+        totalCapacity - requiredBattSize;
+
+      const totalPrice =
+        (batteryObj.price || 0) * num;
+
+      const option = {
+        count: num,
+        battery: batteryObj,
+        totalCapacity,
+        surplus,
+        totalPrice
+      };
+
+      // أول خيار صالح
+      if (!bestOption) {
+        bestOption = option;
+        continue;
+      }
+
+      // ====================================================
+      // الأولوية 1 : أقل زيادة فوق الاحتياج
+      // ====================================================
+      if (option.surplus < bestOption.surplus) {
+        bestOption = option;
+        continue;
+      }
+
+      // ====================================================
+      // الأولوية 2 : أقل عدد بطاريات
+      // ====================================================
+      if (
+        option.surplus === bestOption.surplus &&
+        option.count < bestOption.count
+      ) {
+        bestOption = option;
+        continue;
+      }
+
+      // ====================================================
+      // الأولوية 3 : أقل تكلفة
+      // ====================================================
+      if (
+        option.surplus === bestOption.surplus &&
+        option.count === bestOption.count &&
+        option.totalPrice < bestOption.totalPrice
+      ) {
+        bestOption = option;
+      }
+    }
+  }
+
+  // ============================================================
+  // حماية إضافية
+  // ============================================================
+  if (!bestOption) {
+
+    const largestBattery =
+      sortedBatteries[sortedBatteries.length - 1];
+
+    const largestCap =
+      parseCapacity(largestBattery.capacity);
+
+    const count = Math.ceil(
+      requiredBattSize / largestCap
+    );
+
+    return {
+      battery: largestBattery,
+      count
+    };
+  }
+
+  return {
+    battery: bestOption.battery,
+    count: bestOption.count
+  };
+};
+
+// 🚀 الدالة الرئيسية لحساب المنظومة بالكامل
+export const calculateSolarSystem = (selectedDevices, panelPower, locationName = 'المنصورة') => {
+  let dayEnergyWh = 0, nightEnergyWh = 0, maxPeakLoad = 0;
+ 
+
+  // 1️⃣ حساب استهلاك الأجهزة الفعلي من الواجهة
+  Object.values(selectedDevices).forEach(device => {
+    const dayCount = Number(device.dayCount) || 0;
+    const nightCount = Number(device.nightCount) || 0;
+    const dayPower = Number(device.dayPower) || Number(device.power) || 0;
+    const nightPower = Number(device.nightPower) || Number(device.power) || 0;
+    const dayHours = Number(device.dayHours) || 0;
+    const nightHours = Number(device.nightHours) || 0;
+
+    const dayPeak = dayCount * dayPower;
+    const nightPeak = nightCount * nightPower;
+    maxPeakLoad += Math.max(dayPeak, nightPeak);
+
+    dayEnergyWh += dayCount * dayPower * dayHours;
+    nightEnergyWh += nightCount * nightPower * nightHours;
   });
-
+   /* console.log('═══════════════════════════════════════');
+console.log('📊 [SOLAR CALCULATIONS] نتائج الأحمال:');
+console.log('═══════════════════════════════════════');
+console.log(`🔹 إجمالي أحمال النهار (Day)   : ${Math.round(dayEnergyWh).toLocaleString()} Wh`);
+console.log(`🔸 إجمالي أحمال المساء (Night) : ${Math.round(nightEnergyWh).toLocaleString()} Wh`);
+console.log(`🔺 إجمالي أحمال الذروة (Peak)  : ${Math.round(maxPeakLoad).toLocaleString()} W`);
+console.log('═══════════════════════════════════════'); */
   const totalDailyEnergy = dayEnergyWh + nightEnergyWh;
-
-  // 1. حساب الألواح (6 ساعات ذروة مع معامل فقد وكفاءة 0.88)
-  const totalEnergyRequired = totalDailyEnergy * 1.15;
-  const panelsNeeded = Math.ceil(totalEnergyRequired / (panelPower * 6 * 0.88));
+  const peakSunHours = getPeakSunHoursByLocation(locationName);
+  const panelsNeeded = Math.ceil(
+    (totalDailyEnergy * SAFETY_FACTOR) / (panelPower * peakSunHours * SYSTEM_EFFICIENCY)
+  );
   const totalPVWattage = panelsNeeded * panelPower;
 
-  // 2. حساب حجم الإنفرتر
-  const theoreticalInverterSizeKva = (maxPeakLoad * 1.2) / 1000;
-  
-  // 3. حساب سعة البطارية
-  const calculatedBattery = (nightEnergyWh / 1000) / (0.9 * 0.9);
-  const minBattery = 2.5;
+  const adjustedPeakLoad = maxPeakLoad * DIVERSITY_FACTOR;
+  const invSizeKva = (adjustedPeakLoad * INVERTER_SAFETY) / 1000;
+  const systemVoltage = invSizeKva <= 2.5 ? 24 : 48;
+
+  // حساب سعة التخزين الصافية المطلوبة للبطارية بالكيلوواط
   const finalBatteryKwh = nightEnergyWh > 0 
-    ? Math.max(calculatedBattery, minBattery) 
-    : minBattery;
+    ? Math.max((nightEnergyWh / 1000) / (BATTERY_EFFICIENCY * BATTERY_DOD), 2.5)
+    : 2.5;
 
-  // اختيار أفضل المكونات المتوفرة
-  const { selectedInverter, selectedBattery } = findBestSelections(
-    theoreticalInverterSizeKva, 
-    totalPVWattage, 
-    finalBatteryKwh
-  );
+  // 2️⃣ استدعاء دوال الاختيار الذكية والمطابقة لملف الداتا
+  const { inverter: selectedInverter, count: inverterCount } = findBestInverter(invSizeKva, totalPVWattage, systemVoltage);
+  const { battery: selectedBattery, count: batteryCount } = findBestBattery(finalBatteryKwh, systemVoltage);
   
-  const productValueOnly = parseFloat(selectedInverter.capacity.replace(/[^\d.]/g, ''));
-  const battereValueOnly = parseFloat(selectedBattery.capacity.replace(/[^\d.]/g, ''));
-  const selectedPanelObj = solarData.solarPanels.find(p => parseFloat(p.capacity) === panelPower);
+  const singleBatteryCap = parseCapacity(selectedBattery.capacity) || 3.5;
+  const totalBatteryKwh = batteryCount * singleBatteryCap;
 
-  // --- توليد رقم طلب فريد (Order ID) ---
-  const randomNum = Math.floor(Math.random() * 999999) + 1;
+  const orderId = `LS-${String(Math.floor(Math.random() * 999999) + 1).padStart(6, '0')}`;
 
-// تحويله إلى نص مع تعبئة (padding) بـ 6 أرقام
-const paddedNumber = String(randomNum).padStart(6, '0');
-
-// تشكيل رقم الطلب النهائي
-const orderId = `LS-${paddedNumber}`;
-
-  // إرجاع النتائج النهائية
+  // 3️⃣ إرجاع الكائن الكامل مع الحفاظ على جميع الحقول الأصلية دون نقصان لسلامة الـ UI
   return {
-    orderId: orderId,  // <-- تمت الإضافة
+    orderId,
     panels: panelsNeeded,
-    inverterProductValue: productValueOnly, 
-    inverterActualNeed: theoreticalInverterSizeKva.toFixed(2), 
+    
+    // 📊 حقول الإنفرتر كاملة ومطابقة لملفك الأصلي
+    inverterProductValue: parseCapacity(selectedInverter.capacity) * inverterCount,
+    inverterSingleValue: parseCapacity(selectedInverter.capacity),
+    inverterActualNeed: invSizeKva.toFixed(2),
     inverterBrand: selectedInverter.brand,
-    inverterName: selectedInverter.name, 
-    inverterPrice: selectedInverter.price,      // <-- أضفت السعر أيضاً
-    batteryKwh: battereValueOnly,
-    batteryPrice: selectedBattery.price,
-    batteryName: selectedBattery.name, 
-    batteries: parseFloat(finalBatteryKwh.toFixed(1)),
+    inverterName: inverterCount > 1 ? `${selectedInverter.name} (عدد: ${inverterCount})` : selectedInverter.name,
+    inverterPrice: selectedInverter.price * inverterCount,
+    inverterCount: inverterCount,
+    
+    // 🔋 حقول بنك البطاريات كاملة ومطابقة لملفك الأصلي
+    batteryKwh: totalBatteryKwh,                       
+    batterySingleKwh: singleBatteryCap,                 
+    batteryPrice: selectedBattery.price * batteryCount, 
+    batteryName: batteryCount > 1 ? `${selectedBattery.name} (عدد: ${batteryCount})` : selectedBattery.name,
+    batteryCount: batteryCount,
+    batteries: batteryCount, // الحفاظ عليه كعدد البطاريات الفعلي لمنع تجميد أو لخبطة الـ UI
+    
+    // بقية البيانات العامة للمنظومة
     totalEnergy: totalDailyEnergy,
     peakLoad: (maxPeakLoad / 1000).toFixed(2),
-    panelName: selectedPanelObj ? selectedPanelObj.name : `${panelPower}W`,
-    panelPrice: selectedPanelObj?.price,
+    panelName: solarData.solarPanels.find(p => parseCapacity(p.capacity) === panelPower)?.name || `${panelPower}W`,
+    panelPrice: solarData.solarPanels.find(p => parseCapacity(p.capacity) === panelPower)?.price,
     panelCapacity: `${panelPower}W`,
     dayEnergyWh: Math.round(dayEnergyWh),
     nightEnergyWh: Math.round(nightEnergyWh),
     actualLoadKwh: (totalDailyEnergy / 1000).toFixed(2),
     peakLoadKw: (maxPeakLoad / 1000).toFixed(2),
-    selectedDevices: selectedDevices 
+    systemVoltage,
+    selectedDevices
+
   };
+
 };

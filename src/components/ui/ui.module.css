@@ -1,3 +1,84 @@
+/* تعديل الـ inputWrapper لدعم الـ select */
+.inputWrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  transition: all 0.2s;
+}
+
+.inputWrapper:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.inputIcon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.inputField {
+  width: 100%;
+  padding: 1rem 3rem 1rem 1rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 1rem;
+  outline: none;
+  text-align: right;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+/* أنماط الـ select بنفس تصميم inputField */
+.selectField {
+  width: 100%;
+  padding: 1rem 3rem 1rem 1rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 1rem;
+  outline: none;
+  text-align: right;
+  font-size: 14px;
+  color: #1e293b;
+  font-family: inherit;
+  cursor: pointer;
+  direction: rtl;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* سهم مخصص للـ select */
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.selectWrapper::after {
+  content: "▼";
+  font-size: 10px;
+  color: #94a3b8;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.selectField option {
+  padding: 12px;
+  direction: rtl;
+}
+
 /* تصميم الزر الموحد */
 .btnBase {
     width: 100%;
@@ -23,22 +104,6 @@
 .secondary:hover { background-color: #e2e8f0; }
 
 .amber { background-color: #f28100; color: #0f172a; box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
-
-/* حقول الإدخال */
-.inputWrapper { position: relative; width: 100%; }
-.inputIcon { position: absolute; right: 1rem; top: 1rem; color: #94a3b8; }
-.inputField {
-margin-bottom: 5px;
-    width: 100%;
-    padding: 1rem 3rem 1rem 1rem;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    outline: none;
-    transition: all 0.2s;
-    text-align: right;
-}
-.inputField:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
 
 /* أداة التحكم (Stepper) */
 .stepperContainer {

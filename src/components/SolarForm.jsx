@@ -35,7 +35,12 @@ if (!numericPanelPower || numericPanelPower === 0) {
 }
 
     // 3. تنفيذ الحسابات باستخدام الأجهزة والقدرة المختارة
-    const results = calculateSolarSystem(selectedStandard, numericPanelPower);
+    
+const results = calculateSolarSystem(
+  selectedStandard, 
+  numericPanelPower,
+  customerInfo.address  // أضف هذا السطر لتمرير المنطقة
+);
  
 
     const finalResults = { 

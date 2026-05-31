@@ -381,7 +381,7 @@ let totalPrice = totalPanelsPrice + totalInverterPrice + totalBatteriesPrice;
                 // الصف الثالث: البطارية
                 [
 { text: `$${totalBatteriesPrice}`, alignment: 'center' },
-{ text: '1', alignment: 'center' },
+{ text: (results.batteryCount || 0).toString(), alignment: 'center' },
 { text: (results.batteryName || 'بطارية ليثيوم 15 كيلو MMD Pro').split(' ').reverse().join(' '), alignment: 'right' },
 { text: 'بطارية _LifePo4', alignment: 'right' }
                 ]

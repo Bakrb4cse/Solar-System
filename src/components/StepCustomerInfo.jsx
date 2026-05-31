@@ -1,17 +1,18 @@
 import React from 'react';
-import { User, Phone, MapPin, ArrowLeft} from 'lucide-react';
+import { User, Phone, MapPin, ArrowLeft } from 'lucide-react';
 import InputGroup from './ui/InputGroup';
 import Button from './ui/Button';
+import { LOCATIONS } from '../constants/locations';
 import styles from './form.module.css';
 
 const StepCustomerInfo = ({ customerInfo, setCustomerInfo, onNext }) => {
   
   // دالة للتحقق من إدخال البيانات الأساسية قبل الانتقال
   const handleNext = () => {
-    if (customerInfo.name && customerInfo.phone) {
+    if (customerInfo.name && customerInfo.phone && customerInfo.address) {
       onNext();
     } else {
-      alert("يرجى إدخال الاسم ورقم الجوال للمتابعة");
+      alert("يرجى إدخال الاسم ورقم الجوال والمنطقة للمتابعة");
     }
   };
 
@@ -31,7 +32,7 @@ const StepCustomerInfo = ({ customerInfo, setCustomerInfo, onNext }) => {
 
         <InputGroup 
           icon={Phone}
-          type="Number"
+          type="number"
           placeholder="رقم الجوال"
           value={customerInfo.phone}
           onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
@@ -39,9 +40,11 @@ const StepCustomerInfo = ({ customerInfo, setCustomerInfo, onNext }) => {
 
         <InputGroup 
           icon={MapPin}
-          placeholder="العنوان (مثلاً: عدن - المنصورة)"
+          type="select"
+          placeholder="اختر المنطقة"
           value={customerInfo.address}
           onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+          options={LOCATIONS}
         />
       </div>
 
