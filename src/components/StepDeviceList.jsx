@@ -9,7 +9,13 @@ const StepDeviceList = ({ selectedStandard, setSelectedStandard, onNext, onBack 
   
   const updateValue = (deviceId, field, delta) => {
     const currentVal = selectedStandard[deviceId][field] || 0;
-    const newVal = Math.max(0, currentVal + delta);
+    let newVal = Math.max(0, currentVal + delta);
+    
+    // تقييد ساعات النهار والمساء لتكون بين 1 و 12
+    if (field === 'dayHours' || field === 'nightHours') {
+      newVal = Math.min(12, Math.max(1, newVal));
+    }
+    
     setSelectedStandard(prev => ({
       ...prev,
       [deviceId]: { ...prev[deviceId], [field]: newVal }
@@ -26,16 +32,29 @@ const StepDeviceList = ({ selectedStandard, setSelectedStandard, onNext, onBack 
       
       // تهيئة الجهاز مع دعم القدرة المنفصلة للمكيفات
       const isAC = device.id.includes('ac');
+      
+      // تحديد ساعات النهار والمساء الافتراضية (ضمن النطاق 1-12)
+      let defaultDayHours = 6;
+      let defaultNightHours = 6;
+      
+      if (device.nightOnly) {
+        defaultDayHours = 0;
+        defaultNightHours = 12;
+      } else if (device.id === 'lights') {
+        defaultDayHours = 0;
+        defaultNightHours = 12;
+      }
+      
       return {
         ...prev,
         [device.id]: {
           dayCount: 1,
           nightCount: 1,
-          power: device.defaultPower, // القدرة العامة للأجهزة العادية
-          dayPower: isAC ? (device.dayPower || 1000) : device.defaultPower, // قدرة النهار
-          nightPower: isAC ? (device.nightPower || 400) : device.defaultPower, // قدرة الليل
-          dayHours: device.nightOnly ? 0 : 6,
-          nightHours: device.id === 'lights' ? 12 : 6
+          power: device.defaultPower,
+          dayPower: isAC ? (device.dayPower || 1000) : device.defaultPower,
+          nightPower: isAC ? (device.nightPower || 400) : device.defaultPower,
+          dayHours: defaultDayHours,
+          nightHours: defaultNightHours
         }
       };
     });

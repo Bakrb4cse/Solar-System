@@ -36,15 +36,15 @@ function App() {
               نظام تحجيم المنظومات v2.10
             </div>
            <p className="text-slate-500 text-[10px] text-center mt-2 leading-relaxed">
-  تم التطوير بواسطة المهندس {' '}
+  تصميم وتطوير   {' '}
   <span 
     className="text-emerald-600 font-bold cursor-pointer hover:text-emerald-400 transition-colors underline decoration-dotted underline-offset-4"
     onClick={() => {
-      const devMessage = "السلام عليكم م. بكر، أود التواصل بخصوص نظام تحجيم المنظومات الشمسية.";
-      window.open(`https://wa.me/967774265902?text=${encodeURIComponent(devMessage)}`, '_blank');
+      const facebookUrl = "https://www.facebook.com/profile.php?id=61590381007741";
+      window.open(facebookUrl, '_blank');
     }}
   >
-    بكر أحمد
+    Syntix_Web
   </span>
 </p>
 
@@ -128,15 +128,15 @@ target="_blank"
 
   <p className="text-slate-400 text-[13px] text-center mt-6 leading-relaxed">
   © 2026 جميع الحقوق محفوظة لشركة لاند سولار للطاقة المتجددة <br />
-  تم التطوير بواسطة المهندس {' '}
+  تصميم وتطوير {' '}
   <span 
     className="text-emerald-900/80  font-bold cursor-pointer hover:text-emerald-400 transition-colors underline decoration-dotted underline-offset-4"
     onClick={() => {
-      const devMessage = "السلام عليكم م. بكر، أود التواصل بخصوص نظام تحجيم المنظومات الشمسية.";
-      window.open(`https://wa.me/967774265902?text=${encodeURIComponent(devMessage)}`, '_blank');
+      const facebookUrl = "https://www.facebook.com/profile.php?id=61590381007741";
+      window.open(facebookUrl, '_blank');
     }}
   >
-    بكر أحمد
+    Syntix_Web
   </span>
 </p>
 
